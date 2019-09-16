@@ -40,7 +40,7 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text('$_counter'),
       ),
       body: SoundGrid(),
-      bottomNavigationBar: BottomBar(onPressed: _incrementCounter,),
+      bottomNavigationBar: BottomBar(tempBottomFunction: _incrementCounter,),
     );
   }
 }
@@ -52,12 +52,12 @@ class SoundGrid extends StatelessWidget {
       crossAxisCount: 2,
       childAspectRatio: 1.5,
       children: <Widget>[
-        SoundButton(color: Colors.blueGrey[800],),
-        SoundButton(color: Colors.blue[900],),
-        SoundButton(color: Colors.lightBlue[900],),
-        SoundButton(color: Colors.indigo[800],),
-        SoundButton(color: Colors.teal[900],),
-        SoundButton(color: Colors.cyan[900],),
+        SoundButton(color: Colors.blueGrey[300],),
+        SoundButton(color: Colors.indigo[200],),
+        SoundButton(color: Colors.blue[300],),
+        SoundButton(color: Colors.lightBlue[400],),
+        SoundButton(color: Colors.teal[400],),
+        SoundButton(color: Colors.cyan[400],),
       ],
     );
   }
@@ -72,20 +72,55 @@ class SoundButton extends StatefulWidget {
 }
 
 class SoundButtonState extends State<SoundButton> {
-  bool turnedOn = false;
+  bool _turnedOn = false;
+  double _volume = 0.0;
+
+  _toggleOn() {
+    setState(() => _turnedOn = !_turnedOn);
+  }
+
+  _changeVolume(double newVolume) {
+    setState(() => _volume = newVolume);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Container (
       color: widget.color,
+      child: FlatButton(
+        onPressed: () => _toggleOn(),
+        child: Column (
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('hello'),
+            Icon(_turnedOn ? Icons.pause : Icons.play_arrow),
+            Visibility(
+              visible: _turnedOn,
+              maintainSize: true,
+              maintainAnimation: true,
+              maintainState: true,
+              child: Slider(
+                min: 0.0,
+                max: 100.0,
+                divisions: null,
+                activeColor: Colors.blueGrey[50],
+                inactiveColor: Colors.blueGrey[200],
+                value: _volume,
+                onChanged: (double newVolume) => _changeVolume(newVolume),
+              ),
+            )
+          ],
+        ),
+      ),
     );
   }
 }
 
 class BottomBar extends StatelessWidget {
-  const BottomBar ({this.onPressed});
+  const BottomBar ({this.tempBottomFunction});
 
-  final VoidCallback onPressed;
+  final VoidCallback tempBottomFunction;
   
   Widget build(BuildContext context) {
     return BottomAppBar(
@@ -100,7 +135,7 @@ class BottomBar extends StatelessWidget {
               height: 100,
               child: FlatButton(
                 child: Icon(Icons.play_arrow, size: 60.0),
-                onPressed:  () => onPressed(),
+                onPressed:  () => tempBottomFunction(),
               ),
             ),
           ),
@@ -115,7 +150,7 @@ class BottomBar extends StatelessWidget {
               height: 100,
               child: FlatButton(
                 child: Icon(Icons.timer, size: 60.0),
-                onPressed:  () => onPressed(),
+                onPressed:  () => tempBottomFunction(),
               ),
             ),
           ),
@@ -130,7 +165,7 @@ class BottomBar extends StatelessWidget {
               height: 100,
               child: FlatButton(
                 child: Icon(Icons.favorite_border, size: 60.0),
-                onPressed:  () => onPressed(),
+                onPressed:  () => tempBottomFunction(),
               ),
             ),
           ),
