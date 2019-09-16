@@ -6,7 +6,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Noise.io',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
@@ -57,10 +57,55 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
+      
+      bottomNavigationBar: BottomAppBar(
+        color: Colors.grey,
+        child: Row(
+          mainAxisSize: MainAxisSize.max,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+            Expanded(
+              child: Container(
+                height: 100,
+                child: FlatButton(
+                  child: Icon(Icons.play_arrow, size: 60.0),
+                  onPressed:  () => _incrementCounter(),
+                ),
+              ),
+            ),
+            Container(
+              height: 100,
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey[700]),
+              ),
+            ),
+            Expanded(
+              child: Container(
+                height: 100,
+                child: FlatButton(
+                  child: Icon(Icons.timer, size: 60.0),
+                  onPressed:  () => _incrementCounter(),
+                ),
+              ),
+            ),
+            Container(
+              height: 100,
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey[700]),
+              ),
+            ),
+            Expanded(
+              child: Container(
+                height: 100,
+                child: FlatButton(
+                  child: Icon(Icons.favorite_border, size: 60.0),
+                  onPressed:  () => _incrementCounter(),
+                ),
+              ),
+            ),
+          ],
+        )
       ),
     );
   }
