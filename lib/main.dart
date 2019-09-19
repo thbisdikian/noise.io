@@ -216,19 +216,33 @@ class CountdownTimer extends StatefulWidget {
   CountdownTimerState createState() => CountdownTimerState();
 }
 
+enum Times{NO_TIMER, ONE_MIN, FIVE_MIN, TEN_MIN, FIFTEEN_MIN, THIRTY_MIN, ONE_HOUR, TWO_HOUR}
+
 class CountdownTimerState extends State<CountdownTimer> {
   bool counting = false;
   CountDown cd;
   StreamSubscription<Duration> sub;
   Duration r = Duration();
 
-  _countfrom10() {
+  _cancelTimer() {
     setState(() {
-      if(counting) {
-        sub.cancel();
-      }
+      sub.cancel();
+      counting = false;
+      widget.parent._pause();
+    });
+  }
+
+  _setTimer(Duration newD) {
+    if(counting) {
+      _cancelTimer();
+    }
+
+    setState(() {
+      // if(counting) {
+      //   sub.cancel();
+      // }
       counting = true;
-      cd = CountDown(Duration(seconds:10), refresh: Duration(milliseconds: 500));
+      cd = CountDown(newD, refresh: Duration(seconds: 1));
       sub = cd.stream.listen(null);
 
       sub.onData((Duration d) {
@@ -236,7 +250,6 @@ class CountdownTimerState extends State<CountdownTimer> {
           r = d;
         });
       });
-
 
       sub.onDone(() {
         setState(() {
@@ -246,7 +259,79 @@ class CountdownTimerState extends State<CountdownTimer> {
       });
     });
   }
-  
+
+  Future _userTimer() async {
+    switch(
+      await showDialog(
+        context: context,
+        child: SimpleDialog(
+          title: Text("Set Dialogue"),
+          children: [
+            SimpleDialogOption(
+              child: Text("No timer"),
+              onPressed: () => Navigator.pop(context, Times.NO_TIMER),
+            ),
+            SimpleDialogOption(
+              child: Text("1 minute"),
+              onPressed: () => Navigator.pop(context, Times.ONE_MIN),
+            ),
+            SimpleDialogOption(
+              child: Text("5 minutes"),
+              onPressed: () => Navigator.pop(context, Times.FIVE_MIN),
+            ),
+            SimpleDialogOption(
+              child: Text("10 minutes"),
+              onPressed: () => Navigator.pop(context, Times.TEN_MIN),
+            ),
+            SimpleDialogOption(
+              child: Text("15 minutes"),
+              onPressed: () => Navigator.pop(context, Times.FIFTEEN_MIN),
+            ),
+            SimpleDialogOption(
+              child: Text("30 minutes"),
+              onPressed: () => Navigator.pop(context, Times.THIRTY_MIN),
+            ),
+            SimpleDialogOption(
+              child: Text("1 hours"),
+              onPressed: () => Navigator.pop(context, Times.ONE_HOUR),
+            ),
+            SimpleDialogOption(
+              child: Text("2 hours"),
+              onPressed: () => Navigator.pop(context, Times.TWO_HOUR),
+            ),
+          ],
+        )
+      )
+    ) {
+      case Times.NO_TIMER:
+        _cancelTimer();
+        break;
+      case Times.ONE_MIN:
+        _setTimer(Duration(minutes:1));
+        break;
+      case Times.FIVE_MIN:
+        _setTimer(Duration(minutes:5));
+        break;
+      case Times.TEN_MIN:
+        _setTimer(Duration(minutes:10));
+        break;
+      case Times.FIFTEEN_MIN:
+        _setTimer(Duration(minutes:15));
+        break;
+      case Times.THIRTY_MIN:
+        _setTimer(Duration(minutes:30));
+        break;
+      case Times.ONE_HOUR:
+        _setTimer(Duration(hours:1));
+        break;
+      case Times.TWO_HOUR:
+        _setTimer(Duration(hours:2));
+        break;
+      default:
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Expanded(
@@ -256,7 +341,8 @@ class CountdownTimerState extends State<CountdownTimer> {
           child: counting ? 
             Text("${r.inMinutes%60}".padLeft(2, "0") + ":" + "${(r.inSeconds)%60}".padLeft(2, "0")) : 
             Icon(Icons.timer, size: 40),
-          onPressed:  () => _countfrom10(),
+          // onPressed:  () => _countfrom10(),
+          onPressed: () => _userTimer(),
         ),
       ),
     );
