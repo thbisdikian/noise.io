@@ -5,6 +5,14 @@ import 'package:countdown/countdown.dart';
 
 void main() => runApp(Noiseio());
 
+class SoundButtonInfo {
+  // int id;
+  double volume;
+  bool turnedOn;
+
+  SoundButtonInfo({this.volume = 50, this.turnedOn = false});
+}
+
 class Noiseio extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -30,71 +38,112 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
   bool playing = false;
-  CountDown countdown;
-  StreamSubscription<Duration> countdownListener;
-  Duration remaining;
+  var soundButtons = [SoundButtonInfo(), SoundButtonInfo(), SoundButtonInfo(),
+    SoundButtonInfo(), SoundButtonInfo(), SoundButtonInfo()];
 
-  _timerSet(Duration dur) {
-    if (countdown != null) {
-      countdownListener.cancel();
-    }
-    countdown = CountDown(dur, refresh: Duration(minutes:1));
-    countdownListener = countdown.stream.listen(null);
-    countdownListener.onData((Duration d) => remaining = d);
-    countdownListener.onDone(() => playing = false);
-  }
-  
-
-  _playPause() {
+  _togglePlay() {
     playing ? _pause() : _play();
   }
 
   _play() {
     setState(() {
-     playing = true; 
+      playing = true;
     });
   }
 
   _pause() {
     setState(() {
-     playing = false; 
+      playing = false;
     });
   }
 
-  void _incrementCounter() {
+  _incrementCounter() {
     setState(() {
       _counter++;
     });
   }
 
+  toggleButton(int id) {
+    setState(() {
+      soundButtons[id].turnedOn = !soundButtons[id].turnedOn;
+      if (soundButtons[id].turnedOn) playing = true;
+    });
+  }
+
+  setVolume(int id, double newVolume) {
+    setState(() {
+      soundButtons[id].volume = newVolume;
+    });
+  }
+
+  String buttonsToString() {
+    var rv = "";
+    for(var i = 0; i < 6; ++i) {
+      if (soundButtons[i].turnedOn) {
+        rv += i.toString() + ": " + soundButtons[i].volume.toString() + " || ";
+      }
+    }
+    return rv;
+  }
+
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar: AppBar(
-        // title: Text(widget.title),
-        title: Text('$_counter $playing'),
-        // title: Text("${remaining.inHours%60}".padLeft(2, "0") + ":" + "${remaining.inMinutes%60}".padLeft(2, "0")),
+        title: Text('$_counter || ${playing ? "Playing" : "Paused"} || ${buttonsToString()}'),
       ),
-      body: SoundGrid(),
-      bottomNavigationBar: BottomBar(parent: this ,tempBottomFunction: _incrementCounter,),
+      body: SoundGrid(
+        homeState: this,
+      ),
+      bottomNavigationBar: BottomBar(
+        homeState: this,
+        tempBottomFunction: _incrementCounter,
+      ),
     );
   }
 }
 
 class SoundGrid extends StatelessWidget {
+  final _MyHomePageState homeState;
+
+  SoundGrid({this.homeState});
+
   Widget build(BuildContext context) {
     return GridView.count(
       primary: true,
       crossAxisCount: 2,
       childAspectRatio: 1.5,
       children: <Widget>[
-        SoundButton(color: Colors.blueGrey[300],),
-        SoundButton(color: Colors.indigo[200],),
-        SoundButton(color: Colors.blue[300],),
-        SoundButton(color: Colors.lightBlue[400],),
-        SoundButton(color: Colors.teal[400],),
-        SoundButton(color: Colors.cyan[400],),
+        SoundButton(
+          color: Colors.blueGrey[300],
+          homeState: homeState,
+          id: 0,
+        ),
+        SoundButton(
+          color: Colors.indigo[200],
+          homeState: homeState,
+          id: 1,
+        ),
+        SoundButton(
+          color: Colors.blue[300],
+          homeState: homeState,
+          id: 2,
+        ),
+        SoundButton(
+          color: Colors.lightBlue[400],
+          homeState: homeState,
+          id: 3,
+        ),
+        SoundButton(
+          color: Colors.teal[400],
+          homeState: homeState,
+          id: 4,
+        ),
+        SoundButton(
+          color: Colors.cyan[400],
+          homeState: homeState,
+          id: 5,
+        ),
       ],
     );
   }
@@ -102,39 +151,38 @@ class SoundGrid extends StatelessWidget {
 
 class SoundButton extends StatefulWidget {
   final Color color;
-
-  SoundButton({Key key, this.color}) : super(key: key);
+  final _MyHomePageState homeState;
+  final int id;
+  SoundButton({Key key, this.color, this.homeState, this.id}) : super(key: key);
 
   @override
   SoundButtonState createState() => SoundButtonState();
 }
 
 class SoundButtonState extends State<SoundButton> {
-  bool _turnedOn = false;
-  double _volume = 0.0;
 
   _toggleOn() {
-    setState(() => _turnedOn = !_turnedOn);
+    widget.homeState.toggleButton(widget.id);
   }
 
   _changeVolume(double newVolume) {
-    setState(() => _volume = newVolume);
+    widget.homeState.setVolume(widget.id, newVolume);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container (
+    return Container(
       color: widget.color,
       child: FlatButton(
         onPressed: () => _toggleOn(),
-        child: Column (
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text('hello'),
-            Icon(_turnedOn ? Icons.pause : Icons.play_arrow),
+            Icon(widget.homeState.soundButtons[widget.id].turnedOn ? Icons.pause : Icons.play_arrow),
             Visibility(
-              visible: _turnedOn,
+              visible: widget.homeState.soundButtons[widget.id].turnedOn,
               maintainSize: true,
               maintainAnimation: true,
               maintainState: true,
@@ -144,7 +192,7 @@ class SoundButtonState extends State<SoundButton> {
                 divisions: null,
                 activeColor: Colors.blueGrey[50],
                 inactiveColor: Colors.blueGrey[200],
-                value: _volume,
+                value: widget.homeState.soundButtons[widget.id].volume,
                 onChanged: (double newVolume) => _changeVolume(newVolume),
               ),
             )
@@ -156,98 +204,105 @@ class SoundButtonState extends State<SoundButton> {
 }
 
 class BottomBar extends StatelessWidget {
-
-  final _MyHomePageState parent;
+  final _MyHomePageState homeState;
   final VoidCallback tempBottomFunction;
 
-  BottomBar({this.parent, this.tempBottomFunction});
-  
+  BottomBar({this.homeState, this.tempBottomFunction});
+
   Widget build(BuildContext context) {
     return BottomAppBar(
-      color: Colors.grey,
-      child: Row(
-        mainAxisSize: MainAxisSize.max,
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: <Widget>[
-          Expanded(
-            child: Container(
-              height: 80,
-              child: FlatButton(
-                child: Icon(parent.playing ? Icons.pause : Icons.play_arrow, size: 40),
-                onPressed:  () => parent._playPause(),
+        color: Colors.grey,
+        child: Row(
+          mainAxisSize: MainAxisSize.max,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+            Expanded(
+              child: Container(
+                height: 80,
+                child: FlatButton(
+                  child: Icon(homeState.playing ? Icons.pause : Icons.play_arrow,
+                      size: 40),
+                  onPressed: () => homeState._togglePlay(),
+                ),
               ),
             ),
-          ),
-          Container(
-            height: 80,
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey[700]),
-            ),
-          ),
-          CountdownTimer(parent: parent),
-          Container(
-            height: 80,
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey[700]),
-            ),
-          ),
-          Expanded(
-            child: Container(
+            Container(
               height: 80,
-              child: FlatButton(
-                child: Icon(Icons.favorite_border, size: 40),
-                onPressed:  () => tempBottomFunction(),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey[700]),
               ),
             ),
-          ),
-        ],
-      )
-    );
+            CountdownTimer(homeState: homeState),
+            Container(
+              height: 80,
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey[700]),
+              ),
+            ),
+            Expanded(
+              child: Container(
+                height: 80,
+                child: FlatButton(
+                  child: Icon(Icons.favorite_border, size: 40),
+                  onPressed: () => tempBottomFunction(),
+                ),
+              ),
+            ),
+          ],
+        ));
   }
 }
 
-class CountdownTimer extends StatefulWidget {
-  final _MyHomePageState parent;
+enum Times {
+  NO_TIMER,
+  ONE_MIN,
+  FIVE_MIN,
+  TEN_MIN,
+  FIFTEEN_MIN,
+  THIRTY_MIN,
+  ONE_HOUR,
+  TWO_HOUR
+}
 
-  CountdownTimer({this.parent});
+class CountdownTimer extends StatefulWidget {
+  final _MyHomePageState homeState;
+
+  CountdownTimer({this.homeState});
 
   @override
   CountdownTimerState createState() => CountdownTimerState();
 }
 
-enum Times{NO_TIMER, ONE_MIN, FIVE_MIN, TEN_MIN, FIFTEEN_MIN, THIRTY_MIN, ONE_HOUR, TWO_HOUR}
-
 class CountdownTimerState extends State<CountdownTimer> {
   bool counting = false;
+  int secondsLeft = 0;
   CountDown cd;
   StreamSubscription<Duration> sub;
-  Duration r = Duration();
 
   _cancelTimer() {
     setState(() {
       sub.cancel();
+      secondsLeft = 0;
       counting = false;
-      widget.parent._pause();
+      widget.homeState._pause();
     });
   }
 
   _setTimer(Duration newD) {
-    if(counting) {
+    if (counting) {
       _cancelTimer();
     }
 
     setState(() {
-      // if(counting) {
-      //   sub.cancel();
-      // }
       counting = true;
       cd = CountDown(newD, refresh: Duration(seconds: 1));
+      secondsLeft = newD.inSeconds;
       sub = cd.stream.listen(null);
 
       sub.onData((Duration d) {
         setState(() {
-          r = d;
+          secondsLeft = d.inSeconds;
         });
       });
 
@@ -255,16 +310,15 @@ class CountdownTimerState extends State<CountdownTimer> {
         setState(() {
           counting = false;
         });
-        widget.parent._pause();
+        widget.homeState._pause();
       });
     });
   }
 
   Future _userTimer() async {
-    switch(
-      await showDialog(
+    switch (await showDialog(
         context: context,
-        child: SimpleDialog(
+        builder: (_) => SimpleDialog(
           title: Text("Set Dialogue"),
           children: [
             SimpleDialogOption(
@@ -300,36 +354,47 @@ class CountdownTimerState extends State<CountdownTimer> {
               onPressed: () => Navigator.pop(context, Times.TWO_HOUR),
             ),
           ],
-        )
-      )
-    ) {
+        ))) {
       case Times.NO_TIMER:
         _cancelTimer();
         break;
       case Times.ONE_MIN:
-        _setTimer(Duration(minutes:1));
+        _setTimer(Duration(minutes: 1));
         break;
       case Times.FIVE_MIN:
-        _setTimer(Duration(minutes:5));
+        _setTimer(Duration(minutes: 5));
         break;
       case Times.TEN_MIN:
-        _setTimer(Duration(minutes:10));
+        _setTimer(Duration(minutes: 10));
         break;
       case Times.FIFTEEN_MIN:
-        _setTimer(Duration(minutes:15));
+        _setTimer(Duration(minutes: 15));
         break;
       case Times.THIRTY_MIN:
-        _setTimer(Duration(minutes:30));
+        _setTimer(Duration(minutes: 30));
         break;
       case Times.ONE_HOUR:
-        _setTimer(Duration(hours:1));
+        _setTimer(Duration(hours: 1));
         break;
       case Times.TWO_HOUR:
-        _setTimer(Duration(hours:2));
+        _setTimer(Duration(hours: 2));
         break;
       default:
         break;
     }
+  }
+
+  String timerToString() {
+    int seconds = secondsLeft % 60;
+    int minutes = (secondsLeft/60).floor() % 60;
+    int hours = (secondsLeft/3600).floor();
+    
+    String timeString = "";
+    timeString += (hours > 0) ? (hours.toString() + ":") : "";
+    timeString += minutes.toString().padLeft(2,"0") + ":";
+    timeString += seconds.toString().padLeft(2,"0");
+
+    return timeString;
   }
 
   @override
@@ -338,10 +403,9 @@ class CountdownTimerState extends State<CountdownTimer> {
       child: Container(
         height: 80,
         child: FlatButton(
-          child: counting ? 
-            Text("${r.inMinutes%60}".padLeft(2, "0") + ":" + "${(r.inSeconds)%60}".padLeft(2, "0")) : 
-            Icon(Icons.timer, size: 40),
-          // onPressed:  () => _countfrom10(),
+          child: counting ?
+              Text(timerToString())
+              : Icon(Icons.timer, size: 40),
           onPressed: () => _userTimer(),
         ),
       ),
